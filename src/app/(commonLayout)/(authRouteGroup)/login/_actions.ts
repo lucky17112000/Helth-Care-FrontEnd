@@ -23,16 +23,29 @@ export const loginAction = async (
     );
     const { accessToken, refreshToken, token, user } = response.data;
     //server action e server to server communication hoy tai jkhn server action hoye tkhn direct cokkie browser e hoy na tai manually broser e cookie set korte hobe sbrowser e
+    console.log(token);
     await setTokenInCookie("accessToken", accessToken);
     await setTokenInCookie("refreshToken", refreshToken);
     await setTokenInCookie("better-auth.session_token", token);
 
     redirect("/dashboard");
   } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "digest" in error &&
+      typeof error.digest === "string" &&
+      error.digest.startsWith("NEXT_REDIRECT")
+    ) {
+      throw error; // Rethrow the redirect error to be handled by Next.js
+    }
     console.error("Login error:", error);
     return {
       success: false,
-      message: "An unexpected error occurred.",
+      message:
+        error instanceof Error
+          ? error.message
+          : "An unexpected error occurred.",
     };
   }
 };

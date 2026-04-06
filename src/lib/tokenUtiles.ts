@@ -18,7 +18,11 @@ const getTokenSecondRemaining = (token: string): number => {
     return 0;
   }
 };
-export const setTokenInCookie = async (name: string, token: string) => {
+export const setTokenInCookie = async (
+  name: string,
+  token: string,
+  fallbackMaxAgeInSeconds: number = 24 * 60 * 60, // Default to 1 hour if token is invalid
+) => {
   const maxAgeInSeconds = getTokenSecondRemaining(token);
-  await setCookie(name, token, maxAgeInSeconds);
+  await setCookie(name, token, maxAgeInSeconds || fallbackMaxAgeInSeconds);
 };
