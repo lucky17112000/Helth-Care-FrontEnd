@@ -1,3 +1,4 @@
+//!SECTION reusable inut field
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -69,7 +70,11 @@ const AppField = ({
           disabled={disabled}
           aria-invalid={hasError}
           aria-describedby={hasError ? `${field.name}-error` : undefined}
-          className={cn(prepand && "pl-10", append && "pr-10")}
+          className={cn(
+            prepand && "pl-10",
+            append && "pr-10",
+            hasError && "border-destructive focus-visible:ring-destructive/20",
+          )}
         />
         {append && (
           <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none z-10">
