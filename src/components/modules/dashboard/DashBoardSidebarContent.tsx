@@ -1,6 +1,7 @@
 "use client";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { getIconComponent } from "@/lib/iconMapper";
 import { cn } from "@/lib/utils";
 // import { cn } from "@/lib/utils";
 import { NavSection } from "@/types/dashboard.types";
@@ -46,7 +47,7 @@ const DashBoardSidebarContent = ({
               <div className="space-y-1">
                 {section.items.map((item, id) => {
                   const isActive = pathName === item.href;
-                  //   const Icon = <Home />;
+                  const Icon = getIconComponent(item.icon as string);
                   return (
                     <Link
                       href={item.href || "/"}
@@ -58,7 +59,7 @@ const DashBoardSidebarContent = ({
                           : "transparent hover:bg-accent hover:accent-foreground",
                       )}
                     >
-                      <Home />
+                      <Icon />
                       <span>{item.title}</span>
                     </Link>
                   );
