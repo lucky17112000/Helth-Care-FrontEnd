@@ -108,6 +108,15 @@ Open `http://localhost:3000` in your browser.
 
 ---
 
+## proxy file workthrough
+
+[proxy file workthrough](https://excalidraw.com/#json=eu1Nx6_9YCrTGFhWfr-D5,MVOtBf8dgmAGWv55nYyt0g)
+![alt text](image.png)
+
+## ReftreshToken use
+
+- i am using refresh tokkn in axois instance to handle automatically valid access token and also use it oin proxy file
+
 ## Notes
 
 - Route names above are documented as currently defined in this project.

@@ -26,3 +26,17 @@ export const setTokenInCookie = async (
   const maxAgeInSeconds = getTokenSecondRemaining(token);
   await setCookie(name, token, maxAgeInSeconds || fallbackMaxAgeInSeconds);
 };
+
+//token refresh brfore 5 minute of expiry
+export async function isTokenExpiredSoon(
+  token: string,
+  thresholdInSeconds: number = 5 * 60,
+): Promise<boolean> {
+  const remainingSeconds = getTokenSecondRemaining(token);
+  return remainingSeconds > 0 && remainingSeconds <= thresholdInSeconds;
+}
+
+export async function isTokenexpired(token: string): Promise<boolean> {
+  const remainingSeconds = getTokenSecondRemaining(token);
+  return remainingSeconds === 0;
+}

@@ -19,13 +19,18 @@ import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import React, { useState } from "react";
 
-const LoginForm = () => {
+interface LoginFromprops {
+  redirectPath?: string;
+}
+
+const LoginForm = ({ redirectPath }: LoginFromprops) => {
   const queryClient = useQueryClient();
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-
+  ``;
   const { mutateAsync, isPending } = useMutation({
-    mutationFn: (payload: ILoginPayload) => loginAction(payload),
+    mutationFn: (payload: ILoginPayload) =>
+      loginAction(payload as ILoginPayload, redirectPath),
   });
 
   const form = useForm({

@@ -1,20 +1,57 @@
 import { ApiResponse } from "@/types/api.types";
 import axios from "axios";
+import { isTokenExpiredSoon } from "../tokenUtiles";
+import { cookies, headers } from "next/headers";
+import { getNewTokenWithRefreshToken } from "@/services/auth.services";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 if (!API_BASE_URL) {
   throw new Error("API_BASE_URL is not defined");
 }
-const axiosInstance = () => {
+const axiosInstance = async () => {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("accessToken")?.value;
+  const refreshToken = cookieStore.get("refreshToken")?.value;
+  if (accessToken && refreshToken) {
+    await tryRefreshToken(accessToken, refreshToken);
+  }
+
+  const cookieHeader = cookieStore
+    .getAll()
+    .map((cookie) => `${cookie.name}=${cookie.value}`)
+    .join("; ");
+  const baseHeaders: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (cookieHeader) {
+    baseHeaders.Cookie = cookieHeader;
+  }
+  //eg: cookie: "accessToken=abc123; refreshToken=def456"
   const instance = axios.create({
     baseURL: API_BASE_URL,
     timeout: 30000,
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: baseHeaders,
   });
   return instance;
 };
+
+async function tryRefreshToken(
+  accessToken: string,
+  refreshToken: string,
+): Promise<void> {
+  if (!(await isTokenExpiredSoon(accessToken))) {
+    return;
+  }
+  const requestHeader = await headers();
+  if (requestHeader.get("x-token-refreshed") === "1") {
+    return;
+  }
+  try {
+    await getNewTokenWithRefreshToken(refreshToken);
+  } catch (error) {
+    console.error("Error refreshing token:", error);
+  }
+}
 export interface ApiRequestResponse {
   params?: Record<string, unknown>;
   headers?: Record<string, string>;
@@ -24,8 +61,8 @@ const httpGet = async <TData>(
   options?: ApiRequestResponse,
 ): Promise<ApiResponse<TData>> => {
   try {
-    const instance = axiosInstance();
-    const response = await axiosInstance().get<ApiResponse<TData>>(endpoint, {
+    const instance = await axiosInstance();
+    const response = await instance.get<ApiResponse<TData>>(endpoint, {
       params: options?.params,
       headers: options?.headers,
     });
@@ -43,14 +80,11 @@ const httpPost = async <TData>(
   options?: ApiRequestResponse,
 ): Promise<ApiResponse<TData>> => {
   try {
-    const response = await axiosInstance().post<ApiResponse<TData>>(
-      endpoint,
-      data,
-      {
-        params: options?.params,
-        headers: options?.headers,
-      },
-    );
+    const instance = await axiosInstance();
+    const response = await instance.post<ApiResponse<TData>>(endpoint, data, {
+      params: options?.params,
+      headers: options?.headers,
+    });
     return response.data;
   } catch (error) {
     console.error("HTTP POST request failed:", error);
@@ -64,14 +98,11 @@ const httpPut = async <TData>(
   options?: ApiRequestResponse,
 ): Promise<ApiResponse<TData>> => {
   try {
-    const response = await axiosInstance().put<ApiResponse<TData>>(
-      endpoint,
-      data,
-      {
-        params: options?.params,
-        headers: options?.headers,
-      },
-    );
+    const instance = await axiosInstance();
+    const response = await instance.put<ApiResponse<TData>>(endpoint, data, {
+      params: options?.params,
+      headers: options?.headers,
+    });
     return response.data;
   } catch (error) {
     console.error("HTTP PUT request failed:", error);
@@ -84,13 +115,12 @@ const httpDelete = async <TData>(
   options?: ApiRequestResponse,
 ): Promise<ApiResponse<TData>> => {
   try {
-    const response = await axiosInstance().delete<ApiResponse<TData>>(
-      endpoint,
-      {
-        params: options?.params,
-        headers: options?.headers,
-      },
-    );
+    const instance = await axiosInstance();
+
+    const response = await instance.delete<ApiResponse<TData>>(endpoint, {
+      params: options?.params,
+      headers: options?.headers,
+    });
     return response.data;
   } catch (error) {
     console.error("HTTP DELETE request failed:", error);
@@ -104,14 +134,11 @@ const httpPatch = async <TData>(
   options?: ApiRequestResponse,
 ): Promise<ApiResponse<TData>> => {
   try {
-    const response = await axiosInstance().patch<ApiResponse<TData>>(
-      endpoint,
-      data,
-      {
-        params: options?.params,
-        headers: options?.headers,
-      },
-    );
+    const instance = await axiosInstance();
+    const response = await instance.patch<ApiResponse<TData>>(endpoint, data, {
+      params: options?.params,
+      headers: options?.headers,
+    });
     return response.data;
   } catch (error) {
     console.error("HTTP PATCH request failed:", error);
