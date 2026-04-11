@@ -117,6 +117,14 @@ Open `http://localhost:3000` in your browser.
 
 - i am using refresh tokkn in axois instance to handle automatically valid access token and also use it oin proxy file
 
+## System developed like this
+
+- Data Interface
+- Server Action(Axios Data fatching)
+- Paasing the data as props to the client component
+- calling the tanstack query hook in client componant
+- using all related micro componants into the main componant
+
 ## Notes
 
 - Route names above are documented as currently defined in this project.
