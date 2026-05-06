@@ -17,10 +17,12 @@ import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
+  SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, MoreHorizontal } from "lucide-react";
 import React from "react";
+import TablePagination from "./TablePagination";
 
 interface DataTableActions<TData> {
   onView?: (data: TData) => void;
@@ -34,6 +36,17 @@ interface DataTableProps<TData> {
   actions?: DataTableActions<TData>;
   emptyMessage?: string;
   isLoading?: boolean;
+
+  sorting?: {
+    state: SortingState;
+    onSortingChange: (state: SortingState) => void;
+  };
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+    isPending?: boolean;
+  };
 }
 
 const DataTable = <TData,>({
@@ -42,6 +55,8 @@ const DataTable = <TData,>({
   actions,
   emptyMessage,
   isLoading,
+  sorting,
+  pagination,
 }: DataTableProps<TData>) => {
   const tableColumns: ColumnDef<TData>[] = actions
     ? [
@@ -49,6 +64,7 @@ const DataTable = <TData,>({
         {
           id: "actions", // unique id for the column
           header: "Actions",
+          enableSorting: false,
           cell: ({ row }) => {
             const rowData = row.original;
             // console.log("rowData", rowData);
@@ -89,6 +105,23 @@ const DataTable = <TData,>({
     data,
     columns: tableColumns,
     getCoreRowModel: getCoreRowModel(),
+    // Table data is already sorted by backend when server-side sorting is enabled.
+    manualSorting: Boolean(sorting),
+
+    // Controlled sorting state comes from parent (DoctorsTable), not local table state.
+    state: {
+      ...(sorting ? { sorting: sorting.state } : {}),
+    },
+    // Header click triggers this callback; parent decides URL/query update.
+    onSortingChange: sorting
+      ? (updater) => {
+          const currentSorting = sorting.state;
+
+          const nextSortingState =
+            typeof updater === "function" ? updater(currentSorting) : updater;
+          sorting.onSortingChange(nextSortingState);
+        }
+      : undefined,
   });
   return (
     <div className="relative">
@@ -108,10 +141,32 @@ const DataTable = <TData,>({
               <TableRow key={hg.id}>
                 {hg.headers.map((header) => (
                   <TableHead key={header.id}>
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext(),
+                    {header.isPlaceholder ? null : header.column.getCanSort() ? (
+                      <Button
+                        variant={"ghost"}
+                        className="h-auto cursor-pointer p-0 font-semibold hover:bg-transparent hover:text-inherit focus-visible:ring-0"
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                      </Button>
+                    ) : (
+                      flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )
                     )}
+                    {header.column.getCanSort() ? (
+                      header.column.getIsSorted() === "asc" ? (
+                        <ArrowUp className="inline-block h-3 w-3" />
+                      ) : header.column.getIsSorted() === "desc" ? (
+                        <ArrowDown className="inline-block h-3 w-3" />
+                      ) : (
+                        <ArrowUpDown className="inline-block h-3 w-3 opacity-50" />
+                      )
+                    ) : null}
                   </TableHead>
                 ))}
               </TableRow>
@@ -134,7 +189,7 @@ const DataTable = <TData,>({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={tableColumns.length}
                   className="text-center py-4"
                 >
                   {emptyMessage || "No data available."}
@@ -144,6 +199,14 @@ const DataTable = <TData,>({
           </TableBody>
         </Table>
       </div>
+      {pagination ? (
+        <TablePagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          onPageChange={pagination.onPageChange}
+          isPending={pagination.isPending}
+        />
+      ) : null}
     </div>
   );
 };

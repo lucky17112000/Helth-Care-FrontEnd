@@ -1,0 +1,12 @@
+FROM oven/bun:1.1.42
+
+WORKDIR /app
+
+COPY package.json ./
+RUN bun install
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["bun", "run", "dev", "--", "--hostname", "0.0.0.0", "--port", "3000"]
